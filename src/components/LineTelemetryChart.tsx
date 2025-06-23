@@ -30,7 +30,6 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
 
         data.forEach(item => {
             const date = new Date(item.timestamp);
-            // Group by month
             const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
 
             if (!grouped.has(key)) {
@@ -45,7 +44,6 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
             const avgPrice = items.reduce((sum, item) => sum + item.price, 0) / items.length;
             const totalCost = items.reduce((sum, item) => sum + (item.consumption * item.price), 0);
 
-            // Format date for display - monthly only
             const [year, month] = key.split('-');
             const monthDate = new Date(parseInt(year), parseInt(month), 1);
             const displayDate = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -63,7 +61,7 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
     const chartData = aggregateDataByGranularity(datasets);
 
 
-    const getAxisInterval = (): number => {
+    const getXAxisInterval = (): number => {
         const dataLength = chartData.length;
 
         if (granularity === 'day') {
@@ -75,7 +73,6 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
 
     return (
         <div style={{ width: '100%', height: '600px' }}>
-            {/* Granularity Controls */}
             <div style={{
                 marginBottom: '20px',
                 padding: '15px',
@@ -139,7 +136,7 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="date"
-                        interval={getAxisInterval()}
+                        interval={getXAxisInterval()}
                         tick={{ fontSize: granularity === 'day' ? 8 : 10 }}
                         angle={granularity === 'day' ? -45 : 0}
                         textAnchor={granularity === 'day' ? "end" : "middle"}

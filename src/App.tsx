@@ -1,12 +1,15 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
-import TimeSeriesController from "./controllers/TimeSeriesController";
+import LineTelemetryChart from "./components/LineTelemetryChart";
+import TelemetryProvider from "./appContext/TelemetryProvider";
 
 function App() {
     return (
         <>
-            <TimeSeriesController/>
+            <TelemetryProvider>
+                <LineTelemetryChart/>
+            </TelemetryProvider>
+
         </>
     );
 }

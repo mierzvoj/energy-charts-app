@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import {TelemetryChartProps} from "../interfaces/TelemetryChartProps";
+import {useState} from "react";
+import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer} from 'recharts';
 import {ChartData} from "../interfaces/ChartData";
 import {TelemetryDataset} from "../interfaces/TelemetryDataset";
 import {DateGranularity} from "../types/DateGranularity";
+import {useTelemetryData} from "../appContext/TelemetryProvider";
 
 
-
-export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
+export default function LineTelemetryChart() {
     const [granularity, setGranularity] = useState<DateGranularity>('day');
+    const { datasets, isLoading, error } = useTelemetryData();
+
 
     const aggregateDataByGranularity = (data: TelemetryDataset[]): ChartData[] => {
         if (granularity === 'day') {
@@ -46,7 +47,7 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
 
             const [year, month] = key.split('-');
             const monthDate = new Date(parseInt(year), parseInt(month), 1);
-            const displayDate = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            const displayDate = monthDate.toLocaleDateString('en-US', {month: 'short', year: 'numeric'});
 
             return {
                 date: displayDate,
@@ -71,8 +72,16 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
         }
     };
 
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    if (error) {
+        return <div>Something went wrong. Please try again later</div>
+    }
     return (
-        <div style={{ width: '100%', height: '600px' }}>
+
+        <div style={{width: '100%', height: '600px'}}>
             <div style={{
                 marginBottom: '20px',
                 padding: '15px',
@@ -80,9 +89,9 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
                 borderRadius: '8px',
                 border: '1px solid #e9ecef'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap'}}>
                     <div>
-                        <label style={{ marginRight: '10px', fontWeight: 'bold', color: '#495057' }}>
+                        <label style={{marginRight: '10px', fontWeight: 'bold', color: '#495057'}}>
                             Data Granularity:
                         </label>
                         <select
@@ -101,7 +110,7 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
                         </select>
                     </div>
 
-                    <div style={{ color: '#6c757d', fontSize: '14px' }}>
+                    <div style={{color: '#6c757d', fontSize: '14px'}}>
                         Showing {chartData.length} data points
                         {granularity !== 'day' && (
                             <span> (aggregated from {datasets.length} daily records)</span>
@@ -133,16 +142,16 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
                         bottom: granularity === 'day' ? 80 : 60,
                     }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3"/>
                     <XAxis
                         dataKey="date"
                         interval={getXAxisInterval()}
-                        tick={{ fontSize: granularity === 'day' ? 8 : 10 }}
+                        tick={{fontSize: granularity === 'day' ? 8 : 10}}
                         angle={granularity === 'day' ? -45 : 0}
                         textAnchor={granularity === 'day' ? "end" : "middle"}
                         height={granularity === 'day' ? 80 : 60}
                     />
-                    <YAxis />
+                    <YAxis/>
                     <Tooltip
                         formatter={(value: any, name: string) => {
                             if (name === 'Consumption (kWh)') {
@@ -166,7 +175,7 @@ export default function LineTelemetryChart({ datasets }: TelemetryChartProps) {
                             borderRadius: '4px'
                         }}
                     />
-                    <Legend />
+                    <Legend/>
 
                     <Line
                         type="monotone"

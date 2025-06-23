@@ -1,1 +1,1 @@
-export type DateGranularity = 'day' | 'month' | 'year' | 'week'
+export type DateGranularity = 'day' | 'month'

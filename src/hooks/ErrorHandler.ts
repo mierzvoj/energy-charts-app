@@ -1,6 +1,7 @@
 // hooks/useErrorHandler.ts
 import {useState, useCallback} from 'react';
 import {PresentationError} from "../interfaces/PresentationError";
+import {HttpError} from "../classes/HttpError";
 
 /**
  * Hook for handling errors in the presentation layer
@@ -9,7 +10,6 @@ export function ErrorHandler() {
     const [error, setError] = useState<PresentationError | null>(null);
 
     const handleError = useCallback((error: unknown) => {
-        console.error('Error caught by presentation layer:', error);
 
         const presentationError = transformError(error);
         setError(presentationError);
@@ -41,11 +41,9 @@ function transformError(error: unknown): PresentationError {
     }
 
     // HTTP errors from service layer
-    if (error instanceof Error && (error as any).status) {
-        const status = (error as any).status;
-        const responseBody = (error as any).responseBody || '';
-
-        return transformHttpError(status, error.message, responseBody);
+    if (error instanceof HttpError) {
+        const status = error.status;
+        return transformHttpError(status, error.message);
     }
 
     // Generic errors
@@ -68,7 +66,7 @@ function transformError(error: unknown): PresentationError {
 /**
  * Transform HTTP errors into user-friendly messages
  */
-function transformHttpError(status: number, message: string, responseBody: string): PresentationError {
+function transformHttpError(status: number, message: string): PresentationError {
     const baseError = {
         message,
         status,

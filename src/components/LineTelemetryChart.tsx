@@ -22,8 +22,6 @@ export default function LineTelemetryChart() {
         const validData = data.filter(item => {
             return item &&
                 item.timestamp &&
-                typeof item.consumption === 'number' &&
-                typeof item.price === 'number' &&
                 !isNaN(item.consumption) &&
                 !isNaN(item.price) &&
                 item.consumption >= 0 &&
@@ -31,7 +29,6 @@ export default function LineTelemetryChart() {
         });
 
         if (validData.length === 0) {
-            console.warn('No valid data found after filtering');
             return [];
         }
 
@@ -41,7 +38,6 @@ export default function LineTelemetryChart() {
                     const date = new Date(item.timestamp);
                     // Check if date is valid
                     if (isNaN(date.getTime())) {
-                        console.warn('Invalid timestamp:', item.timestamp);
                         return null;
                     }
 
@@ -55,8 +51,7 @@ export default function LineTelemetryChart() {
                         totalCost: (Number(item.price) || 0) * (Number(item.consumption) || 0),
                         dataPoints: 1
                     };
-                } catch (error) {
-                    console.warn('Error processing daily data item:', item, error);
+                } catch {
                     return null;
                 }
             }).filter((item): item is ChartData => item !== null);
@@ -69,7 +64,6 @@ export default function LineTelemetryChart() {
             try {
                 const date = new Date(item.timestamp);
                 if (isNaN(date.getTime())) {
-                    console.warn('Invalid timestamp for monthly grouping:', item.timestamp);
                     return;
                 }
 
@@ -79,8 +73,8 @@ export default function LineTelemetryChart() {
                     grouped.set(key, []);
                 }
                 grouped.get(key)!.push(item);
-            } catch (error) {
-                console.warn('Error grouping monthly data:', item, error);
+            } catch {
+                // Silently skip invalid items
             }
         });
 
@@ -101,7 +95,6 @@ export default function LineTelemetryChart() {
                         .filter(val => !isNaN(val) && val >= 0);
 
                     if (validConsumption.length === 0 || validPrices.length === 0) {
-                        console.warn('No valid consumption or price data for month:', key);
                         return null;
                     }
 
@@ -119,7 +112,6 @@ export default function LineTelemetryChart() {
                     const monthDate = new Date(parseInt(year) || 0, parseInt(month) || 0, 1);
 
                     if (isNaN(monthDate.getTime())) {
-                        console.warn('Invalid month date:', key);
                         return null;
                     }
 
@@ -135,8 +127,7 @@ export default function LineTelemetryChart() {
                         totalCost: totalCost || 0,
                         dataPoints: items.length
                     };
-                } catch (error) {
-                    console.warn('Error processing monthly data for key:', key, error);
+                } catch {
                     return null;
                 }
             })
@@ -144,8 +135,7 @@ export default function LineTelemetryChart() {
             .sort((a, b) => {
                 try {
                     return a.date.localeCompare(b.date);
-                } catch (error) {
-                    console.warn('Error sorting dates:', error);
+                } catch {
                     return 0;
                 }
             });
@@ -190,8 +180,8 @@ export default function LineTelemetryChart() {
                     };
                 }
             }
-        } catch (error) {
-            console.warn('Error calculating date range:', error);
+        } catch {
+            // Silently handle error
         }
 
         let totalConsumption = 0;
@@ -212,8 +202,8 @@ export default function LineTelemetryChart() {
                     ? validPrices.reduce((sum, val) => sum + val, 0) / validPrices.length
                     : 0;
             }
-        } catch (error) {
-            console.warn('Error calculating statistics:', error);
+        } catch {
+            // Silently handle error
         }
 
         return {
@@ -244,8 +234,7 @@ export default function LineTelemetryChart() {
                 return [numValue.toFixed(2) + suffix, name];
             }
             return [numValue.toString(), name];
-        } catch (error) {
-            console.warn('Error formatting tooltip:', error);
+        } catch {
             return ['Error', name];
         }
     }, [granularity]);

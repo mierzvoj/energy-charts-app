@@ -16,31 +16,24 @@ export default function TelemetryProvider({ children }: { children: ReactNode })
     const { error, handleError, clearError } = ErrorHandler();
 
     const fetchTelemetry = useCallback(async () => {
-        console.log('Starting telemetry fetch...');
 
         setIsLoading(true);
         clearError();
 
         try {
-            console.log('Fetching telemetry data');
             const data = await telemetryService.getTimeSeries();
-
-            console.log('Telemetry fetch successful:', data.length, 'records');
             setDatasets(data);
 
         } catch (error: unknown) {
-            console.error('Telemetry fetch failed:', error);
             handleError(error); // Transform and handle error in presentation layer
 
         } finally {
             setIsLoading(false);
-            console.log('Telemetry fetch completed');
         }
     }, [handleError, clearError]);
 
     // Auto-fetch on mount
     useEffect(() => {
-        console.log('TelemetryProvider mounted - starting initial fetch');
         fetchTelemetry();
     }, [fetchTelemetry]);
 

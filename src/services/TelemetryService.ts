@@ -1,5 +1,6 @@
 // services/TelemetryService.ts
 import { TelemetryDataset } from '../interfaces/TelemetryDataset';
+import {HttpError} from "../classes/HttpError";
 
 /**
  * Clean service layer - focuses only on HTTP communication
@@ -10,7 +11,6 @@ class TelemetryService {
 
     constructor() {
         this.apiUrl = process.env.REACT_APP_API_BASE_URL || '';
-        console.log('TelemetryService initialized with API URL:', this.apiUrl);
     }
 
     /**
@@ -20,7 +20,6 @@ class TelemetryService {
      */
     async getTimeSeries(): Promise<TelemetryDataset[]> {
         const fullUrl = `${this.apiUrl}/api/random`;
-        console.log('Fetching from URL:', fullUrl);
 
         const response = await fetch(fullUrl, {
             headers: {
@@ -29,21 +28,18 @@ class TelemetryService {
             },
         });
 
-        console.log('Response status:', response.status, response.statusText);
-
         // Let the presentation layer handle HTTP errors
         if (!response.ok) {
             // Attach response body for detailed error handling
             const errorText = await response.text();
-            const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
-            (error as any).response = response;
-            (error as any).responseBody = errorText;
-            (error as any).status = response.status;
-            throw error;
+            const httpError = new HttpError(errorText, response, errorText);
+            httpError.response = response;
+            httpError.responseBody = errorText;
+            httpError.status = response.status;
+            throw httpError;
         }
 
         const data = await response.json();
-        console.log('Successfully fetched data:', data);
 
         // Validate and clean the response data
         return data;

@@ -1,18 +1,20 @@
-// components/LineTelemetryChart.tsx
-import { useState, useCallback, useMemo } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { DateGranularity } from "../types/DateGranularity";
-import { TelemetryDataset } from "../interfaces/TelemetryDataset";
-import { ChartData } from "../interfaces/ChartData";
-import { useTelemetryData, useTelemetryErrorHandler } from "../appContext/TelemetryProvider";
-import { ErrorDisplay } from "./ErrorDisplay";
+import {useCallback, useMemo, useState} from "react";
+import {DateGranularity} from "../types/DateGranularity";
+import {TelemetryDataset} from "../interfaces/TelemetryDataset";
+import {ChartData} from "../interfaces/ChartData";
+import {useTelemetryData, useTelemetryErrorHandler} from "../appContext/TelemetryProvider";
+import {ErrorDisplay} from "./ErrorDisplay";
+import Chart from "./Chart";
+import ChartSelector from "./ChartSelector";
+import StatisticsDisplay from "./StatisticsDisplay";
+import NoDataError from "./NoDataError";
+import ChartInformation from "./ChartInformation";
 
 export default function LineTelemetryChart() {
     const [granularity, setGranularity] = useState<DateGranularity>('day');
-    const { datasets, isLoading } = useTelemetryData();
-    const { error, clearError } = useTelemetryErrorHandler();
+    const {datasets, isLoading} = useTelemetryData();
+    const {error, clearError} = useTelemetryErrorHandler();
 
-    // Data processing logic kept in component with null protection
     const aggregateDataByGranularity = useCallback((data: TelemetryDataset[]): ChartData[] => {
         if (!data || data.length === 0) {
             return [];
@@ -141,20 +143,10 @@ export default function LineTelemetryChart() {
             });
     }, [granularity]);
 
-    // Memoized chart data
     const chartData = useMemo(() => {
         return aggregateDataByGranularity(datasets);
     }, [datasets, aggregateDataByGranularity]);
 
-    // X-axis interval calculation
-    const xAxisInterval = useMemo(() => {
-        const dataLength = chartData.length;
-        return granularity === 'day'
-            ? Math.max(0, Math.floor(dataLength / 15))
-            : 0;
-    }, [chartData.length, granularity]);
-
-    // Statistics with null protection
     const statistics = useMemo(() => {
         const dataPointsCount = chartData?.length || 0;
         const originalDataCount = datasets?.length || 0;
@@ -215,31 +207,6 @@ export default function LineTelemetryChart() {
         };
     }, [chartData, datasets]);
 
-    // Tooltip formatter with null protection
-    const tooltipFormatter = useCallback((value: any, name: string) => {
-        try {
-            const numValue = Number(value);
-            if (isNaN(numValue)) {
-                return ['N/A', name];
-            }
-
-            if (name === 'Consumption (kWh)') {
-                const suffix = granularity === 'day' ? '' : ' avg';
-                return [numValue.toFixed(2) + suffix, name];
-            } else if (name === 'Price (PLN/kWh)') {
-                const suffix = granularity === 'day' ? '' : ' avg';
-                return [numValue.toFixed(3) + suffix, name];
-            } else if (name === 'Total Cost (PLN)') {
-                const suffix = granularity === 'day' ? '' : ' (month total)';
-                return [numValue.toFixed(2) + suffix, name];
-            }
-            return [numValue.toString(), name];
-        } catch {
-            return ['Error', name];
-        }
-    }, [granularity]);
-
-    // Loading state with null protection
     if (isLoading && (!datasets || datasets.length === 0)) {
         return (
             <div style={{
@@ -250,18 +217,17 @@ export default function LineTelemetryChart() {
                 fontSize: '18px',
                 color: '#6c757d'
             }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+                <div style={{textAlign: 'center'}}>
+                    <div style={{fontSize: '24px', marginBottom: '10px'}}>⏳</div>
                     Loading telemetry data...
                 </div>
             </div>
         );
     }
 
-    // Error state
     if (error) {
         return (
-            <div style={{ padding: '20px' }}>
+            <div style={{padding: '20px'}}>
                 <ErrorDisplay
                     error={error}
                     onDismiss={clearError}
@@ -271,28 +237,15 @@ export default function LineTelemetryChart() {
         );
     }
 
-    // No data state with null protection
     if ((!chartData || chartData.length === 0) && !isLoading && !error) {
         return (
-            <div style={{
-                padding: '40px',
-                textAlign: 'center',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-            }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
-                <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>No data available</h4>
-                <p style={{ margin: '0', color: '#6c757d' }}>
-                    No telemetry data found for the selected period.
-                </p>
-            </div>
+            <NoDataError />
         );
     }
 
     return (
-        <div style={{ width: '100%', height: '600px' }}>
-            {/* Chart Controls */}
+        <div style={{width: '100%', height: '600px'}}>
+
             <div style={{
                 marginBottom: '20px',
                 padding: '15px',
@@ -307,33 +260,9 @@ export default function LineTelemetryChart() {
                     flexWrap: 'wrap',
                     marginBottom: '10px'
                 }}>
-                    <div>
-                        <label style={{
-                            marginRight: '10px',
-                            fontWeight: 'bold',
-                            color: '#495057'
-                        }}>
-                            Data Granularity:
-                        </label>
-                        <select
-                            value={granularity}
-                            onChange={(e) => setGranularity(e.target.value as DateGranularity)}
-                            style={{
-                                padding: '8px 12px',
-                                borderRadius: '4px',
-                                border: '1px solid #ced4da',
-                                backgroundColor: 'white',
-                                fontSize: '14px',
-                                cursor: 'pointer'
-                            }}
-                            disabled={isLoading}
-                        >
-                            <option value="day">Daily View</option>
-                            <option value="month">Monthly Averages</option>
-                        </select>
-                    </div>
+                    <ChartSelector granularity={granularity} setGranularity={setGranularity} isLoading={isLoading}/>
 
-                    <div style={{ color: '#6c757d', fontSize: '14px' }}>
+                    <div style={{color: '#6c757d', fontSize: '14px'}}>
                         Showing {statistics.dataPointsCount} data points
                         {granularity !== 'day' && (
                             <span> (aggregated from {statistics.originalDataCount} daily records)</span>
@@ -341,100 +270,22 @@ export default function LineTelemetryChart() {
                     </div>
                 </div>
 
-                {/* Statistics */}
-                {(statistics.dateRange || statistics.totalConsumption !== undefined || statistics.averagePrice !== undefined) && (
-                    <div style={{
-                        display: 'flex',
-                        gap: '20px',
-                        flexWrap: 'wrap',
-                        fontSize: '13px',
-                        color: '#6c757d',
-                        marginBottom: '10px'
-                    }}>
-                        {statistics.dateRange && (
-                            <div>📅 <strong>Period:</strong> {statistics.dateRange.start} - {statistics.dateRange.end}</div>
-                        )}
-                        {statistics.totalConsumption !== undefined && statistics.totalConsumption !== null && (
-                            <div>⚡ <strong>Total:</strong> {statistics.totalConsumption.toFixed(2)} kWh</div>
-                        )}
-                        {statistics.averagePrice !== undefined && statistics.averagePrice !== null && (
-                            <div>💰 <strong>Avg Price:</strong> {statistics.averagePrice.toFixed(3)} PLN/kWh</div>
-                        )}
-                    </div>
+                {(
+                    statistics.dateRange
+                    && statistics.totalConsumption !== undefined
+                    && statistics.averagePrice !== undefined
+                    && statistics.dateRange.start !== statistics.dateRange.end
+                ) && (
+                    <StatisticsDisplay statistics={statistics}/>
                 )}
 
-                {granularity !== 'day' && (
-                    <div style={{
-                        padding: '8px 12px',
-                        backgroundColor: '#e3f2fd',
-                        borderRadius: '4px',
-                        fontSize: '13px',
-                        color: '#1565c0'
-                    }}>
-                        📊 Monthly aggregation: Consumption & Price show averages, Total Cost shows actual sums
-                    </div>
-                )}
+                {granularity === 'month'
+                    ? <ChartInformation message={"📊 Monthly aggregation: Consumption & Price show averages, Total Cost shows actual sums"} />
+                    : <ChartInformation message={"📊 Daily aggregation: Consumption & Price show averages, Total Cost shows actual sums"} />
+                }
             </div>
 
-            {/* Chart */}
-            <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                    data={chartData}
-                    margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: granularity === 'day' ? 80 : 60,
-                    }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                        dataKey="date"
-                        interval={xAxisInterval}
-                        tick={{ fontSize: granularity === 'day' ? 8 : 10 }}
-                        angle={granularity === 'day' ? -45 : 0}
-                        textAnchor={granularity === 'day' ? "end" : "middle"}
-                        height={granularity === 'day' ? 80 : 60}
-                    />
-                    <YAxis />
-                    <Tooltip
-                        formatter={tooltipFormatter}
-                        labelFormatter={(label) => `${label}`}
-                        contentStyle={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }}
-                    />
-                    <Legend />
-
-                    <Line
-                        type="monotone"
-                        dataKey="consumption"
-                        stroke="#2563eb"
-                        dot={granularity !== 'day'}
-                        strokeWidth={granularity === 'day' ? 1.5 : 2.5}
-                        name="Consumption (kWh)"
-                    />
-                    <Line
-                        type="monotone"
-                        dataKey="price"
-                        stroke="#059669"
-                        dot={granularity !== 'day'}
-                        strokeWidth={granularity === 'day' ? 1.5 : 2.5}
-                        name="Price (PLN/kWh)"
-                    />
-                    <Line
-                        type="monotone"
-                        dataKey="totalCost"
-                        stroke="#dc2626"
-                        dot={granularity !== 'day'}
-                        strokeWidth={granularity === 'day' ? 1.5 : 2.5}
-                        name="Total Cost (PLN)"
-                    />
-                </LineChart>
-            </ResponsiveContainer>
+            <Chart granularity={granularity} chartData={chartData}/>
         </div>
     );
 }

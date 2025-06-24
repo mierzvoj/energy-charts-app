@@ -1,11 +1,6 @@
-// services/TelemetryService.ts
 import { TelemetryDataset } from '../interfaces/TelemetryDataset';
 import {HttpError} from "../classes/HttpError";
 
-/**
- * Clean service layer - focuses only on HTTP communication
- * Error handling is delegated to the presentation layer
- */
 class TelemetryService {
     private readonly apiUrl: string;
 
@@ -28,9 +23,7 @@ class TelemetryService {
             },
         });
 
-        // Let the presentation layer handle HTTP errors
         if (!response.ok) {
-            // Attach response body for detailed error handling
             const errorText = await response.text();
             const httpError = new HttpError(errorText, response, errorText);
             httpError.response = response;
@@ -39,10 +32,7 @@ class TelemetryService {
             throw httpError;
         }
 
-        const data = await response.json();
-
-        // Validate and clean the response data
-        return data;
+        return await response.json();
     }
 }
 

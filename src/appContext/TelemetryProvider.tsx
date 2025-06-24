@@ -1,4 +1,3 @@
-// appContext/TelemetryProvider.tsx
 import { createContext, ReactNode, useContext, useEffect, useState, useCallback } from "react";
 import { TelemetryDataset } from "../interfaces/TelemetryDataset";
 import { telemetryService } from "../services/TelemetryService";
@@ -12,7 +11,6 @@ export default function TelemetryProvider({ children }: { children: ReactNode })
     const [datasets, setDatasets] = useState<TelemetryDataset[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    // Error handling in presentation layer
     const { error, handleError, clearError } = ErrorHandler();
 
     const fetchTelemetry = useCallback(async () => {
@@ -25,14 +23,13 @@ export default function TelemetryProvider({ children }: { children: ReactNode })
             setDatasets(data);
 
         } catch (error: unknown) {
-            handleError(error); // Transform and handle error in presentation layer
+            handleError(error);
 
         } finally {
             setIsLoading(false);
         }
     }, [handleError, clearError]);
 
-    // Auto-fetch on mount
     useEffect(() => {
         fetchTelemetry();
     }, [fetchTelemetry]);
@@ -59,7 +56,6 @@ export function useTelemetryData(): TelemetryContextType {
     return context;
 }
 
-// Simplified hook for telemetry data access
 export function useTelemetryErrorHandler() {
     const { error, clearError } = useTelemetryData();
 

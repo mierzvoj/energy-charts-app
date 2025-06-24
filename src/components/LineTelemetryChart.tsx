@@ -26,7 +26,6 @@ export default function LineTelemetryChart() {
             }));
         }
 
-
         const grouped = new Map<string, TelemetryDataset[]>();
 
         data.forEach(item => {

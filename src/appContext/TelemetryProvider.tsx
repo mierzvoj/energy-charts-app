@@ -12,14 +12,14 @@ export default function TelemetryProvider({ children }: { children: ReactNode })
     const [datasets, setDataset] = useState<TelemetryDataset[]>([]);
 
     const fetchTelemetry = async () => {
-        console.log('🔥 fetchTelemetry called!'); // Add this debug log
+        console.log('FetchTelemetry called');
         setIsLoading(true);
         setError(null);
 
         try {
-            console.log('📞 About to call telemetryService.getTimeSeries()'); // Add this
+            console.log('Call telemetryService.getTimeSeries()');
             const data = await telemetryService.getTimeSeries();
-            console.log('✅ Got data from service:', data); // Add this
+            console.log('Got data from service:', data);
             setDataset(data);
         } catch (error: any) {
             setError(error.message || 'Failed to fetch telemetry data');
@@ -29,7 +29,7 @@ export default function TelemetryProvider({ children }: { children: ReactNode })
     };
 
     useEffect(() => {
-        console.log('🚀 TelemetryProvider mounted, starting fetch...'); // Add this
+        console.log('TelemetryProvider mounted, starting fetch...');
         fetchTelemetry();
     }, []); //
     return (
@@ -38,7 +38,6 @@ export default function TelemetryProvider({ children }: { children: ReactNode })
             isLoading,
             error,
             refetch: fetchTelemetry,
-            // refetchWithParams: fetchTelemetryWithParams
         }}>
             {children}
         </TelemetryContext.Provider>

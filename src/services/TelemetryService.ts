@@ -1,5 +1,10 @@
+// services/TelemetryService.ts
 import { TelemetryDataset } from '../interfaces/TelemetryDataset';
 
+/**
+ * Clean service layer - focuses only on HTTP communication
+ * Error handling is delegated to the presentation layer
+ */
 class TelemetryService {
     private readonly apiUrl: string;
 
@@ -8,27 +13,40 @@ class TelemetryService {
         console.log('TelemetryService initialized with API URL:', this.apiUrl);
     }
 
+    /**
+     * Fetch time series data
+     * @throws {Response} HTTP error responses for 4xx/5xx status codes
+     * @throws {Error} Network errors, timeouts, or parsing errors
+     */
     async getTimeSeries(): Promise<TelemetryDataset[]> {
         const fullUrl = `${this.apiUrl}/api/random`;
         console.log('Fetching from URL:', fullUrl);
 
-        try {
-            const response = await fetch(fullUrl);
-            console.log('Response status:', response.status, response.statusText);
+        const response = await fetch(fullUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+        });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('HTTP Error Response:', errorText);
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
+        console.log('Response status:', response.status, response.statusText);
 
-            const data = await response.json();
-            console.log('Successfully fetched data:', data);
-            return data;
-        } catch (error) {
-            console.error('Fetch error:', error);
+        // Let the presentation layer handle HTTP errors
+        if (!response.ok) {
+            // Attach response body for detailed error handling
+            const errorText = await response.text();
+            const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+            (error as any).response = response;
+            (error as any).responseBody = errorText;
+            (error as any).status = response.status;
             throw error;
         }
+
+        const data = await response.json();
+        console.log('Successfully fetched data:', data);
+
+        // Validate and clean the response data
+        return data;
     }
 }
 

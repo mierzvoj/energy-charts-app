@@ -1,86 +1,309 @@
-import {useState} from "react";
-import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer} from 'recharts';
-import {ChartData} from "../interfaces/ChartData";
-import {TelemetryDataset} from "../interfaces/TelemetryDataset";
-import {DateGranularity} from "../types/DateGranularity";
-import {useTelemetryData} from "../appContext/TelemetryProvider";
-
+// components/LineTelemetryChart.tsx
+import { useState, useCallback, useMemo } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { DateGranularity } from "../types/DateGranularity";
+import { TelemetryDataset } from "../interfaces/TelemetryDataset";
+import { ChartData } from "../interfaces/ChartData";
+import { useTelemetryData, useTelemetryErrorHandler } from "../appContext/TelemetryProvider";
+import { ErrorDisplay } from "./ErrorDisplay";
 
 export default function LineTelemetryChart() {
     const [granularity, setGranularity] = useState<DateGranularity>('day');
-    const { datasets, isLoading, error } = useTelemetryData();
+    const { datasets, isLoading } = useTelemetryData();
+    const { error, clearError } = useTelemetryErrorHandler();
 
-
-    const aggregateDataByGranularity = (data: TelemetryDataset[]): ChartData[] => {
-        if (granularity === 'day') {
-
-            return data.map(item => ({
-                date: new Date(item.timestamp).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric'
-                }),
-                consumption: item.consumption,
-                price: item.price,
-                totalCost: item.price * item.consumption,
-                dataPoints: 1
-            }));
+    // Data processing logic kept in component with null protection
+    const aggregateDataByGranularity = useCallback((data: TelemetryDataset[]): ChartData[] => {
+        if (!data || data.length === 0) {
+            return [];
         }
 
-        const grouped = new Map<string, TelemetryDataset[]>();
-
-        data.forEach(item => {
-            const date = new Date(item.timestamp);
-            const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
-
-            if (!grouped.has(key)) {
-                grouped.set(key, []);
-            }
-            grouped.get(key)!.push(item);
+        // Filter out invalid data entries
+        const validData = data.filter(item => {
+            return item &&
+                item.timestamp &&
+                typeof item.consumption === 'number' &&
+                typeof item.price === 'number' &&
+                !isNaN(item.consumption) &&
+                !isNaN(item.price) &&
+                item.consumption >= 0 &&
+                item.price >= 0;
         });
 
-
-        return Array.from(grouped.entries()).map(([key, items]) => {
-            const avgConsumption = items.reduce((sum, item) => sum + item.consumption, 0) / items.length;
-            const avgPrice = items.reduce((sum, item) => sum + item.price, 0) / items.length;
-            const totalCost = items.reduce((sum, item) => sum + (item.consumption * item.price), 0);
-
-            const [year, month] = key.split('-');
-            const monthDate = new Date(parseInt(year), parseInt(month), 1);
-            const displayDate = monthDate.toLocaleDateString('en-US', {month: 'short', year: 'numeric'});
-
-            return {
-                date: displayDate,
-                consumption: avgConsumption,
-                price: avgPrice,
-                totalCost: totalCost,
-                dataPoints: items.length
-            };
-        }).sort((a, b) => a.date.localeCompare(b.date));
-    };
-
-    const chartData = aggregateDataByGranularity(datasets);
-
-
-    const getXAxisInterval = (): number => {
-        const dataLength = chartData.length;
+        if (validData.length === 0) {
+            console.warn('No valid data found after filtering');
+            return [];
+        }
 
         if (granularity === 'day') {
-            return Math.max(0, Math.floor(dataLength / 15)); // Show every 15th day
-        } else {
-            return 0;
+            return validData.map(item => {
+                try {
+                    const date = new Date(item.timestamp);
+                    // Check if date is valid
+                    if (isNaN(date.getTime())) {
+                        console.warn('Invalid timestamp:', item.timestamp);
+                        return null;
+                    }
+
+                    return {
+                        date: date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                        }),
+                        consumption: Number(item.consumption) || 0,
+                        price: Number(item.price) || 0,
+                        totalCost: (Number(item.price) || 0) * (Number(item.consumption) || 0),
+                        dataPoints: 1
+                    };
+                } catch (error) {
+                    console.warn('Error processing daily data item:', item, error);
+                    return null;
+                }
+            }).filter((item): item is ChartData => item !== null);
         }
-    };
 
-    if (isLoading) {
-        return <div>Loading...</div>;
+        // Monthly aggregation with null protection
+        const grouped = new Map<string, TelemetryDataset[]>();
+
+        validData.forEach(item => {
+            try {
+                const date = new Date(item.timestamp);
+                if (isNaN(date.getTime())) {
+                    console.warn('Invalid timestamp for monthly grouping:', item.timestamp);
+                    return;
+                }
+
+                const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
+
+                if (!grouped.has(key)) {
+                    grouped.set(key, []);
+                }
+                grouped.get(key)!.push(item);
+            } catch (error) {
+                console.warn('Error grouping monthly data:', item, error);
+            }
+        });
+
+        return Array.from(grouped.entries())
+            .map(([key, items]) => {
+                try {
+                    if (!items || items.length === 0) {
+                        return null;
+                    }
+
+                    // Calculate averages with null protection
+                    const validConsumption = items
+                        .map(item => Number(item.consumption))
+                        .filter(val => !isNaN(val) && val >= 0);
+
+                    const validPrices = items
+                        .map(item => Number(item.price))
+                        .filter(val => !isNaN(val) && val >= 0);
+
+                    if (validConsumption.length === 0 || validPrices.length === 0) {
+                        console.warn('No valid consumption or price data for month:', key);
+                        return null;
+                    }
+
+                    const avgConsumption = validConsumption.reduce((sum, val) => sum + val, 0) / validConsumption.length;
+                    const avgPrice = validPrices.reduce((sum, val) => sum + val, 0) / validPrices.length;
+
+                    // Calculate total cost from individual items
+                    const totalCost = items.reduce((sum, item) => {
+                        const consumption = Number(item.consumption) || 0;
+                        const price = Number(item.price) || 0;
+                        return sum + (consumption * price);
+                    }, 0);
+
+                    const [year, month] = key.split('-');
+                    const monthDate = new Date(parseInt(year) || 0, parseInt(month) || 0, 1);
+
+                    if (isNaN(monthDate.getTime())) {
+                        console.warn('Invalid month date:', key);
+                        return null;
+                    }
+
+                    const displayDate = monthDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        year: 'numeric'
+                    });
+
+                    return {
+                        date: displayDate,
+                        consumption: avgConsumption || 0,
+                        price: avgPrice || 0,
+                        totalCost: totalCost || 0,
+                        dataPoints: items.length
+                    };
+                } catch (error) {
+                    console.warn('Error processing monthly data for key:', key, error);
+                    return null;
+                }
+            })
+            .filter((item): item is ChartData => item !== null)
+            .sort((a, b) => {
+                try {
+                    return a.date.localeCompare(b.date);
+                } catch (error) {
+                    console.warn('Error sorting dates:', error);
+                    return 0;
+                }
+            });
+    }, [granularity]);
+
+    // Memoized chart data
+    const chartData = useMemo(() => {
+        return aggregateDataByGranularity(datasets);
+    }, [datasets, aggregateDataByGranularity]);
+
+    // X-axis interval calculation
+    const xAxisInterval = useMemo(() => {
+        const dataLength = chartData.length;
+        return granularity === 'day'
+            ? Math.max(0, Math.floor(dataLength / 15))
+            : 0;
+    }, [chartData.length, granularity]);
+
+    // Statistics with null protection
+    const statistics = useMemo(() => {
+        const dataPointsCount = chartData?.length || 0;
+        const originalDataCount = datasets?.length || 0;
+
+        let dateRange = null;
+        try {
+            if (datasets && datasets.length > 0) {
+                const validDates = datasets
+                    .map(d => {
+                        try {
+                            return d?.timestamp ? new Date(d.timestamp) : null;
+                        } catch {
+                            return null;
+                        }
+                    })
+                    .filter((date): date is Date => date !== null && !isNaN(date.getTime()))
+                    .sort((a, b) => a.getTime() - b.getTime());
+
+                if (validDates.length > 0) {
+                    dateRange = {
+                        start: validDates[0].toLocaleDateString(),
+                        end: validDates[validDates.length - 1].toLocaleDateString()
+                    };
+                }
+            }
+        } catch (error) {
+            console.warn('Error calculating date range:', error);
+        }
+
+        let totalConsumption = 0;
+        let averagePrice = 0;
+
+        try {
+            if (chartData && chartData.length > 0) {
+                const validConsumption = chartData
+                    .map(item => Number(item?.consumption) || 0)
+                    .filter(val => !isNaN(val));
+
+                const validPrices = chartData
+                    .map(item => Number(item?.price) || 0)
+                    .filter(val => !isNaN(val));
+
+                totalConsumption = validConsumption.reduce((sum, val) => sum + val, 0);
+                averagePrice = validPrices.length > 0
+                    ? validPrices.reduce((sum, val) => sum + val, 0) / validPrices.length
+                    : 0;
+            }
+        } catch (error) {
+            console.warn('Error calculating statistics:', error);
+        }
+
+        return {
+            dataPointsCount,
+            originalDataCount,
+            dateRange,
+            totalConsumption: totalConsumption || 0,
+            averagePrice: averagePrice || 0
+        };
+    }, [chartData, datasets]);
+
+    // Tooltip formatter with null protection
+    const tooltipFormatter = useCallback((value: any, name: string) => {
+        try {
+            const numValue = Number(value);
+            if (isNaN(numValue)) {
+                return ['N/A', name];
+            }
+
+            if (name === 'Consumption (kWh)') {
+                const suffix = granularity === 'day' ? '' : ' avg';
+                return [numValue.toFixed(2) + suffix, name];
+            } else if (name === 'Price (PLN/kWh)') {
+                const suffix = granularity === 'day' ? '' : ' avg';
+                return [numValue.toFixed(3) + suffix, name];
+            } else if (name === 'Total Cost (PLN)') {
+                const suffix = granularity === 'day' ? '' : ' (month total)';
+                return [numValue.toFixed(2) + suffix, name];
+            }
+            return [numValue.toString(), name];
+        } catch (error) {
+            console.warn('Error formatting tooltip:', error);
+            return ['Error', name];
+        }
+    }, [granularity]);
+
+    // Loading state with null protection
+    if (isLoading && (!datasets || datasets.length === 0)) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '400px',
+                fontSize: '18px',
+                color: '#6c757d'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+                    Loading telemetry data...
+                </div>
+            </div>
+        );
     }
 
+    // Error state
     if (error) {
-        return <div>Something went wrong. Please try again later</div>
+        return (
+            <div style={{ padding: '20px' }}>
+                <ErrorDisplay
+                    error={error}
+                    onDismiss={clearError}
+                    showTechnicalDetails={process.env.NODE_ENV === 'development'}
+                />
+            </div>
+        );
     }
-    return (
 
-        <div style={{width: '100%', height: '600px'}}>
+    // No data state with null protection
+    if ((!chartData || chartData.length === 0) && !isLoading && !error) {
+        return (
+            <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+            }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
+                <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>No data available</h4>
+                <p style={{ margin: '0', color: '#6c757d' }}>
+                    No telemetry data found for the selected period.
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ width: '100%', height: '600px' }}>
+            {/* Chart Controls */}
             <div style={{
                 marginBottom: '20px',
                 padding: '15px',
@@ -88,9 +311,19 @@ export default function LineTelemetryChart() {
                 borderRadius: '8px',
                 border: '1px solid #e9ecef'
             }}>
-                <div style={{display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap'}}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    flexWrap: 'wrap',
+                    marginBottom: '10px'
+                }}>
                     <div>
-                        <label style={{marginRight: '10px', fontWeight: 'bold', color: '#495057'}}>
+                        <label style={{
+                            marginRight: '10px',
+                            fontWeight: 'bold',
+                            color: '#495057'
+                        }}>
                             Data Granularity:
                         </label>
                         <select
@@ -101,25 +334,48 @@ export default function LineTelemetryChart() {
                                 borderRadius: '4px',
                                 border: '1px solid #ced4da',
                                 backgroundColor: 'white',
-                                fontSize: '14px'
+                                fontSize: '14px',
+                                cursor: 'pointer'
                             }}
+                            disabled={isLoading}
                         >
                             <option value="day">Daily View</option>
                             <option value="month">Monthly Averages</option>
                         </select>
                     </div>
 
-                    <div style={{color: '#6c757d', fontSize: '14px'}}>
-                        Showing {chartData.length} data points
+                    <div style={{ color: '#6c757d', fontSize: '14px' }}>
+                        Showing {statistics.dataPointsCount} data points
                         {granularity !== 'day' && (
-                            <span> (aggregated from {datasets.length} daily records)</span>
+                            <span> (aggregated from {statistics.originalDataCount} daily records)</span>
                         )}
                     </div>
                 </div>
 
+                {/* Statistics */}
+                {(statistics.dateRange || statistics.totalConsumption !== undefined || statistics.averagePrice !== undefined) && (
+                    <div style={{
+                        display: 'flex',
+                        gap: '20px',
+                        flexWrap: 'wrap',
+                        fontSize: '13px',
+                        color: '#6c757d',
+                        marginBottom: '10px'
+                    }}>
+                        {statistics.dateRange && (
+                            <div>📅 <strong>Period:</strong> {statistics.dateRange.start} - {statistics.dateRange.end}</div>
+                        )}
+                        {statistics.totalConsumption !== undefined && statistics.totalConsumption !== null && (
+                            <div>⚡ <strong>Total:</strong> {statistics.totalConsumption.toFixed(2)} kWh</div>
+                        )}
+                        {statistics.averagePrice !== undefined && statistics.averagePrice !== null && (
+                            <div>💰 <strong>Avg Price:</strong> {statistics.averagePrice.toFixed(3)} PLN/kWh</div>
+                        )}
+                    </div>
+                )}
+
                 {granularity !== 'day' && (
                     <div style={{
-                        marginTop: '10px',
                         padding: '8px 12px',
                         backgroundColor: '#e3f2fd',
                         borderRadius: '4px',
@@ -131,6 +387,7 @@ export default function LineTelemetryChart() {
                 )}
             </div>
 
+            {/* Chart */}
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                     data={chartData}
@@ -141,47 +398,33 @@ export default function LineTelemetryChart() {
                         bottom: granularity === 'day' ? 80 : 60,
                     }}
                 >
-                    <CartesianGrid strokeDasharray="3 3"/>
+                    <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="date"
-                        interval={getXAxisInterval()}
-                        tick={{fontSize: granularity === 'day' ? 8 : 10}}
+                        interval={xAxisInterval}
+                        tick={{ fontSize: granularity === 'day' ? 8 : 10 }}
                         angle={granularity === 'day' ? -45 : 0}
                         textAnchor={granularity === 'day' ? "end" : "middle"}
                         height={granularity === 'day' ? 80 : 60}
                     />
-                    <YAxis/>
+                    <YAxis />
                     <Tooltip
-                        formatter={(value: any, name: string) => {
-                            if (name === 'Consumption (kWh)') {
-                                const suffix = granularity === 'day' ? '' : ' avg';
-                                return [value.toFixed(2) + suffix, name];
-                            } else if (name === 'Price (PLN/kWh)') {
-                                const suffix = granularity === 'day' ? '' : ' avg';
-                                return [value.toFixed(3) + suffix, name];
-                            } else if (name === 'Total Cost (PLN)') {
-                                const suffix = granularity === 'day' ? '' : ' (month total)';
-                                return [value.toFixed(2) + suffix, name];
-                            }
-                            return [value, name];
-                        }}
-                        labelFormatter={(label) => {
-                            return `${label}`;
-                        }}
+                        formatter={tooltipFormatter}
+                        labelFormatter={(label) => `${label}`}
                         contentStyle={{
                             backgroundColor: 'rgba(255, 255, 255, 0.95)',
                             border: '1px solid #ccc',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                         }}
                     />
-                    <Legend/>
+                    <Legend />
 
                     <Line
                         type="monotone"
                         dataKey="consumption"
                         stroke="#2563eb"
                         dot={granularity !== 'day'}
-                        // dotSize={4}
                         strokeWidth={granularity === 'day' ? 1.5 : 2.5}
                         name="Consumption (kWh)"
                     />
@@ -190,7 +433,6 @@ export default function LineTelemetryChart() {
                         dataKey="price"
                         stroke="#059669"
                         dot={granularity !== 'day'}
-                        // dotSize={4}
                         strokeWidth={granularity === 'day' ? 1.5 : 2.5}
                         name="Price (PLN/kWh)"
                     />
@@ -199,7 +441,6 @@ export default function LineTelemetryChart() {
                         dataKey="totalCost"
                         stroke="#dc2626"
                         dot={granularity !== 'day'}
-                        // dotSize={4}
                         strokeWidth={granularity === 'day' ? 1.5 : 2.5}
                         name="Total Cost (PLN)"
                     />

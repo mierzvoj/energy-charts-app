@@ -1,10 +1,7 @@
 import {DateGranularity} from "../types/DateGranularity";
+import {ChartSelectorProps} from "../types/ChartSelectorProps";
 
-type ChartSelectorProps = {
-    granularity: DateGranularity;
-    setGranularity: (granularity: DateGranularity) => void;
-    isLoading: boolean;
-}
+
 
 export default function ChartSelector({granularity, setGranularity, isLoading}: ChartSelectorProps) {
     return (

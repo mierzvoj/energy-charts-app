@@ -1,8 +1,4 @@
-import {Statistics} from "../types/Statistics";
-
-type StatisticsDisplayProps = {
-    statistics: Statistics;
-}
+import {StatisticsDisplayProps} from "../types/StatisticsDisplayProps";
 
 export default function StatisticsDisplay({ statistics }: StatisticsDisplayProps) {
     return (

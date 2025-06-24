@@ -2,8 +2,8 @@ import {useCallback, useMemo, useState} from "react";
 import {DateGranularity} from "../types/DateGranularity";
 import {TelemetryDataset} from "../interfaces/TelemetryDataset";
 import {ChartData} from "../interfaces/ChartData";
-import {useTelemetryData, useTelemetryErrorHandler} from "../appContext/TelemetryProvider";
-import {ErrorDisplay} from "./ErrorDisplay";
+import {useTelemetryData, useTelemetryErrorHandler} from "../context/TelemetryProvider";
+import {ErrorView} from "./ErrorView";
 import Chart from "./Chart";
 import ChartSelector from "./ChartSelector";
 import StatisticsDisplay from "./StatisticsDisplay";
@@ -20,7 +20,6 @@ export default function LineTelemetryChart() {
             return [];
         }
 
-        // Filter out invalid data entries
         const validData = data.filter(item => {
             return item &&
                 item.timestamp &&
@@ -38,7 +37,6 @@ export default function LineTelemetryChart() {
             return validData.map(item => {
                 try {
                     const date = new Date(item.timestamp);
-                    // Check if date is valid
                     if (isNaN(date.getTime())) {
                         return null;
                     }
@@ -59,25 +57,22 @@ export default function LineTelemetryChart() {
             }).filter((item): item is ChartData => item !== null);
         }
 
-        // Monthly aggregation with null protection
         const grouped = new Map<string, TelemetryDataset[]>();
 
         validData.forEach(item => {
-            try {
-                const date = new Date(item.timestamp);
-                if (isNaN(date.getTime())) {
-                    return;
-                }
 
-                const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
-
-                if (!grouped.has(key)) {
-                    grouped.set(key, []);
-                }
-                grouped.get(key)!.push(item);
-            } catch {
-                // Silently skip invalid items
+            const date = new Date(item.timestamp);
+            if (isNaN(date.getTime())) {
+                return;
             }
+
+            const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
+
+            if (!grouped.has(key)) {
+                grouped.set(key, []);
+            }
+            grouped.get(key)!.push(item);
+
         });
 
         return Array.from(grouped.entries())
@@ -87,7 +82,6 @@ export default function LineTelemetryChart() {
                         return null;
                     }
 
-                    // Calculate averages with null protection
                     const validConsumption = items
                         .map(item => Number(item.consumption))
                         .filter(val => !isNaN(val) && val >= 0);
@@ -103,7 +97,6 @@ export default function LineTelemetryChart() {
                     const avgConsumption = validConsumption.reduce((sum, val) => sum + val, 0) / validConsumption.length;
                     const avgPrice = validPrices.reduce((sum, val) => sum + val, 0) / validPrices.length;
 
-                    // Calculate total cost from individual items
                     const totalCost = items.reduce((sum, item) => {
                         const consumption = Number(item.consumption) || 0;
                         const price = Number(item.price) || 0;
@@ -152,51 +145,42 @@ export default function LineTelemetryChart() {
         const originalDataCount = datasets?.length || 0;
 
         let dateRange = null;
-        try {
-            if (datasets && datasets.length > 0) {
-                const validDates = datasets
-                    .map(d => {
-                        try {
-                            return d?.timestamp ? new Date(d.timestamp) : null;
-                        } catch {
-                            return null;
-                        }
-                    })
-                    .filter((date): date is Date => date !== null && !isNaN(date.getTime()))
-                    .sort((a, b) => a.getTime() - b.getTime());
 
-                if (validDates.length > 0) {
-                    dateRange = {
-                        start: validDates[0].toLocaleDateString(),
-                        end: validDates[validDates.length - 1].toLocaleDateString()
-                    };
-                }
+        if (datasets && datasets.length > 0) {
+            const validDates = datasets
+                .map(d => {
+                    return d?.timestamp ? new Date(d.timestamp) : null;
+                })
+                .filter((date): date is Date => date !== null && !isNaN(date.getTime()))
+                .sort((a, b) => a.getTime() - b.getTime());
+
+            if (validDates.length > 0) {
+                dateRange = {
+                    start: validDates[0].toLocaleDateString(),
+                    end: validDates[validDates.length - 1].toLocaleDateString()
+                };
             }
-        } catch {
-            // Silently handle error
         }
 
         let totalConsumption = 0;
         let averagePrice = 0;
 
-        try {
-            if (chartData && chartData.length > 0) {
-                const validConsumption = chartData
-                    .map(item => Number(item?.consumption) || 0)
-                    .filter(val => !isNaN(val));
 
-                const validPrices = chartData
-                    .map(item => Number(item?.price) || 0)
-                    .filter(val => !isNaN(val));
+        if (chartData && chartData.length > 0) {
+            const validConsumption = chartData
+                .map(item => Number(item?.consumption) || 0)
+                .filter(val => !isNaN(val));
 
-                totalConsumption = validConsumption.reduce((sum, val) => sum + val, 0);
-                averagePrice = validPrices.length > 0
-                    ? validPrices.reduce((sum, val) => sum + val, 0) / validPrices.length
-                    : 0;
-            }
-        } catch {
-            // Silently handle error
+            const validPrices = chartData
+                .map(item => Number(item?.price) || 0)
+                .filter(val => !isNaN(val));
+
+            totalConsumption = validConsumption.reduce((sum, val) => sum + val, 0);
+            averagePrice = validPrices.length > 0
+                ? validPrices.reduce((sum, val) => sum + val, 0) / validPrices.length
+                : 0;
         }
+
 
         return {
             dataPointsCount,
@@ -228,7 +212,7 @@ export default function LineTelemetryChart() {
     if (error) {
         return (
             <div style={{padding: '20px'}}>
-                <ErrorDisplay
+                <ErrorView
                     error={error}
                     onDismiss={clearError}
                     showTechnicalDetails={process.env.NODE_ENV === 'development'}
@@ -239,7 +223,7 @@ export default function LineTelemetryChart() {
 
     if ((!chartData || chartData.length === 0) && !isLoading && !error) {
         return (
-            <NoDataError />
+            <NoDataError/>
         );
     }
 
@@ -280,11 +264,12 @@ export default function LineTelemetryChart() {
                 )}
 
                 {granularity === 'month'
-                    ? <ChartInformation message={"📊 Monthly aggregation: Consumption & Price show averages, Total Cost shows actual sums"} />
-                    : <ChartInformation message={"📊 Daily aggregation: Consumption & Price show averages, Total Cost shows actual sums"} />
+                    ? <ChartInformation
+                        message={"📊 Monthly aggregation: Consumption & Price show averages, Total Cost shows actual sums"}/>
+                    : <ChartInformation
+                        message={"📊 Daily aggregation: Consumption & Price show averages, Total Cost shows actual sums"}/>
                 }
             </div>
-
             <Chart granularity={granularity} chartData={chartData}/>
         </div>
     );

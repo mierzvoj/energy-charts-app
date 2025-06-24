@@ -1,8 +1,7 @@
-// components/ErrorDisplay.tsx
 import React from 'react';
 import {ErrorDisplayProps} from "../interfaces/ErrorDisplayProps";
 
-export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
+export const ErrorView: React.FC<ErrorDisplayProps> = ({
                                                               error,
                                                               onDismiss,
                                                               showTechnicalDetails = false

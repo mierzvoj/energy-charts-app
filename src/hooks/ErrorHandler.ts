@@ -1,7 +1,6 @@
 import {useState, useCallback} from 'react';
 import {PresentationError} from "../interfaces/PresentationError";
-import {HttpError} from "../classes/HttpError";
-import {transformError} from "./utils/transformError";
+import {transformError} from "./utils/TransformError";
 
 export function ErrorHandler() {
     const [error, setError] = useState<PresentationError | null>(null);

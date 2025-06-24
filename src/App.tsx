@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import LineTelemetryChart from "./components/LineTelemetryChart";
-import TelemetryProvider from "./appContext/TelemetryProvider";
+import TelemetryProvider from "./context/TelemetryProvider";
 
 function App() {
     return (

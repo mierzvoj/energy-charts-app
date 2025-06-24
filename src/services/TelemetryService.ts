@@ -1,5 +1,5 @@
 import { TelemetryDataset } from '../interfaces/TelemetryDataset';
-import {HttpError} from "../classes/HttpError";
+import {HttpError} from "../errors/HttpError";
 
 class TelemetryService {
     private readonly apiUrl: string;

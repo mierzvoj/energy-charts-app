@@ -14,36 +14,68 @@ A React TypeScript application for visualizing energy consumption data with inte
 
 ```
 energy-charts-app/
-├── public/                     # Static assets
-├── node_modules/              # Dependencies
-├── src/
-│   ├── appContext/           # React Context providers
-│   │   └── TelemetryProvider.tsx
-│   ├── components/           # React components
-│   │   └── LineTelemetryChart.tsx
-│   ├── interfaces/           # TypeScript interfaces
-│   │   ├── ChartData.ts
-│   │   ├── TelemetryChartProps.ts
-│   │   ├── TelemetryContextType.ts
-│   │   └── TelemetryDataset.ts
-│   ├── services/            # API services
-│   │   └── TelemetryService.ts
-│   ├── types/               # Type definitions
-│   ├── App.css             # Application styles
-│   ├── App.test.tsx        # App component tests
-│   ├── App.tsx             # Main application component
-│   ├── index.css           # Global styles
-│   ├── index.tsx           # Application entry point
-│   ├── logo.svg            # App logo
-│   ├── react-app-env.d.ts  # React app type definitions
-│   ├── reportWebVitals.ts  # Performance monitoring
-│   └── setupTests.ts       # Test configuration
-├── .env.local              # Environment variables (create this)
-├── .gitignore             # Git ignore rules
-├── package.json           # Project dependencies
-├── package-lock.json      # Lock file
-├── tsconfig.json          # TypeScript configuration
-└── README.md              # This file
+├── 📂 src/
+│   ├── 📂 components/           # React Components
+│   │   ├── 🔧 Chart.tsx                    # Base chart component
+│   │   ├── 📊 ChartInformation.tsx         # Chart info display
+│   │   ├── 🔄 ChartSelector.tsx            # Chart type selector
+│   │   ├── ❌ ErrorView.tsx                # Error state component
+│   │   ├── 📈 LineTelemetryChart.tsx       # Main line chart (Primary)
+│   │   ├── 🚫 NoDataError.tsx              # No data state
+│   │   ├── 📊 StatisticsDisplay.test.tsx   # Statistics tests
+│   │   └── 📊 StatisticsDisplay.tsx        # Statistics component
+│   │
+│   ├── 📂 context/              # React Context
+│   │   └── 🔗 TelemetryProvider.tsx        # Data provider context
+│   │
+│   ├── 📂 errors/               # Error Handling
+│   │   └── 🔧 HttpErrors.ts                # HTTP error utilities
+│   │
+│   ├── 📂 hooks/                # Custom React Hooks
+│   │   └── 📂 utils/
+│   │       ├── ❌ ErrorMessageTransformer.ts  # Error message handling
+│   │       ├── 🔄 TransformErrors.ts          # Error transformation
+│   │       └── 🛠️ ErrorHandler.ts             # Main error handler
+│   │
+│   ├── 📂 interfaces/           # TypeScript Interfaces
+│   │   ├── 📊 ChartData.ts                 # Chart data structure
+│   │   ├── ❌ ErrorDisplayProps.ts         # Error display props
+│   │   ├── 🎯 PresentationError.ts         # Presentation error types
+│   │   ├── 🔗 TelemetryContextType.ts      # Context type definitions
+│   │   └── 📡 TelemetryDataset.ts          # Telemetry data structure
+│   │
+│   ├── 📂 services/             # API Services
+│   │   └── 🌐 TelemetryService.ts          # Data fetching service
+│   │
+│   ├── 📂 types/                # Type Definitions
+│   │   ├── 📊 ChartInformationProps.ts     # Chart info props
+│   │   ├── 🔄 ChartSelectorProps.ts        # Selector props
+│   │   ├── 📅 DateGranularity.ts           # Date granularity enum
+│   │   ├── 📊 Statistics.ts                # Statistics types
+│   │   └── 📊 StatisticsDisplayProps.ts    # Statistics display props
+│   │
+│   ├── 🎨 App.css               # Main app styles
+│   ├── ⚛️ App.tsx               # Main app component
+│   ├── 🎨 index.css             # Global styles
+│   ├── ⚛️ index.tsx             # App entry point
+│   ├── 🖼️ logo.svg              # App logo
+│   ├── ⚡ react-app-env.d.ts    # React app types
+│   ├── 📊 reportWebVitals.ts    # Performance monitoring
+│   └── 🧪 setupTests.ts         # Test setup configuration
+│
+├── 📂 public/                   # Static Assets
+│   └── 📁 (standard CRA files)
+│
+├── 🔧 Configuration Files
+├── ⚙️ .env                      # Environment variables
+├── ⚙️ .env.example              # Environment template
+├── ⚙️ .env.local                # Local environment overrides
+├── 🚫 .gitignore               # Git ignore rules
+├── 🔍 eslint.config.mjs         # ESLint configuration
+├── 🧪 jest.config.js            # Jest test configuration
+├── 📦 package.json              # Project dependencies
+├── 🔒 package-lock.json         # Dependency lock file
+└── 📖 README.md                 # Project documentation
 ```
 
 ## 🛠️ Installation & Setup

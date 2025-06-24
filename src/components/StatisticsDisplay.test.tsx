@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import {render, screen} from "@testing-library/react";
-import TelemetryProvider from "../appContext/TelemetryProvider";
+import TelemetryProvider from "../context/TelemetryProvider";
 import StatisticsDisplay from "./StatisticsDisplay";
 import {Statistics} from "../types/Statistics";
 

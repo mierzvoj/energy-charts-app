@@ -1,6 +1,4 @@
-type ChartInformationProps = {
-    message: string;
-}
+import {ChartInformationProps} from "../types/ChartInformationProps";
 
 export default function ChartInformation({ message }: ChartInformationProps) {
     return (

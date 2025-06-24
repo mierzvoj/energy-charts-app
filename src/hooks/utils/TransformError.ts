@@ -1,6 +1,6 @@
 import {PresentationError} from "../../interfaces/PresentationError";
-import {HttpError} from "../../classes/HttpError";
-import {transformHttpError} from "./errorMessageTransformer";
+import {HttpError} from "../../errors/HttpError";
+import {transformHttpError} from "./ErrorMessageTransformer";
 
 export function transformError(error: unknown): PresentationError {
     if (error instanceof TypeError && error.message.includes('fetch')) {

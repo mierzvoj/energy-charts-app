@@ -9,7 +9,7 @@ class TelemetryService {
     }
 
     async getTimeSeries(): Promise<TelemetryDataset[]> {
-        const fullUrl = `${this.apiUrl}/timeSeries`;
+        const fullUrl = `${this.apiUrl}/api/random`;
         console.log('Fetching from URL:', fullUrl);
 
         try {

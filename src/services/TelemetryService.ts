@@ -25,7 +25,7 @@ class TelemetryService {
 
         if (!response.ok) {
             const errorText = await response.text();
-            const httpError = new HttpError(errorText, response, errorText);
+            const httpError = new HttpError(errorText, response);
             httpError.response = response;
             httpError.responseBody = errorText;
             httpError.status = response.status;

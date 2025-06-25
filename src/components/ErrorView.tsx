@@ -19,7 +19,7 @@ export const ErrorView: React.FC<ErrorDisplayProps> = ({
         }}>
             <div style={{display: 'flex', alignItems: 'flex-start', gap: '12px'}}>
                 <span style={{fontSize: '24px', flexShrink: 0}}>
-                    ❌
+                    X
                 </span>
 
                 <div style={{flex: 1}}>

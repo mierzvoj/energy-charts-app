@@ -1,22 +1,17 @@
 import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
-import { DateGranularity } from "../types/DateGranularity";
 import {useCallback, useMemo} from "react";
-import {ChartData} from "../interfaces/ChartData";
+import {ChartProps} from "../types/ChartProps";
 
-type ChartProps = {
-    granularity: DateGranularity;
-    chartData: ChartData[];
-}
 
 export default function Chart({granularity, chartData}: ChartProps) {
     const xAxisInterval = useMemo(() => {
         const dataLength = chartData.length;
         return granularity === 'day'
-            ? Math.max(0, Math.floor(dataLength / 15))
+            ? Math.max(0, Math.floor(dataLength / 100))
             : 0;
     }, [chartData.length, granularity]);
 
-    const tooltipFormatter = useCallback((value: any, name: string) => {
+    const tooltipFormatter = useCallback((value: never, name: string) => {
         try {
             const numValue = Number(value);
             if (isNaN(numValue)) {

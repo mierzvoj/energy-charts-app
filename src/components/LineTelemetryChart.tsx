@@ -15,11 +15,25 @@ export default function LineTelemetryChart() {
     const {datasets, isLoading} = useTelemetryData();
     const {error, clearError} = useTelemetryErrorHandler();
 
+    /**
+     * Data aggregation by selected chart granularity logic (day or month), uses callback hook to avoid unnecessary recalculation
+     * Recalculates upon granularity dependency change
+     * @param {TelemetryDataset[]}  array of data TelemetryDataset
+     * @returns {ChartData[]} array of ChartData type
+     */
     const aggregateDataByGranularity = useCallback((data: TelemetryDataset[]): ChartData[] => {
+
+        /**
+         * Early return when no data is found
+         */
         if (!data || data.length === 0) {
             return [];
         }
-
+        /**
+         * Data initial filtering, timestamp presence check
+         * Proper data figures check, data positiveness validation and exits function
+         * All inproper data is being discarded
+         */
         const validData = data.filter(item => {
             return item &&
                 item.timestamp &&
@@ -58,7 +72,6 @@ export default function LineTelemetryChart() {
         }
 
         const grouped = new Map<string, TelemetryDataset[]>();
-
         validData.forEach(item => {
 
             const date = new Date(item.timestamp);
@@ -165,7 +178,6 @@ export default function LineTelemetryChart() {
         let totalConsumption = 0;
         let averagePrice = 0;
 
-
         if (chartData && chartData.length > 0) {
             const validConsumption = chartData
                 .map(item => Number(item?.consumption) || 0)
@@ -180,7 +192,6 @@ export default function LineTelemetryChart() {
                 ? validPrices.reduce((sum, val) => sum + val, 0) / validPrices.length
                 : 0;
         }
-
 
         return {
             dataPointsCount,
@@ -265,9 +276,9 @@ export default function LineTelemetryChart() {
 
                 {granularity === 'month'
                     ? <ChartInformation
-                        message={"📊 Monthly aggregation: Consumption & Price show averages, Total Cost shows actual sums"}/>
+                        message={"Monthly aggregation: Consumption & Price show averages, Total Cost shows actual sums"}/>
                     : <ChartInformation
-                        message={"📊 Daily aggregation: Consumption & Price show averages, Total Cost shows actual sums"}/>
+                        message={"Daily aggregation: Consumption & Price show averages, Total Cost shows actual sums"}/>
                 }
             </div>
             <Chart granularity={granularity} chartData={chartData}/>

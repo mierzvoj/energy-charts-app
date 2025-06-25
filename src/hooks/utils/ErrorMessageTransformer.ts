@@ -1,6 +1,13 @@
 import {PresentationError} from "../../interfaces/PresentationError";
 
-export function transformHttpError(status: number, message: string): PresentationError {
+/**
+ * TransformHttpError processes https errors for better human readability and understanding
+ * taking into account most popular http error codes
+ * @param status
+ * @param message
+ * @constructor
+ */
+export function TransformHttpError(status: number, message: string): PresentationError {
     const baseError = {
         message,
         status,

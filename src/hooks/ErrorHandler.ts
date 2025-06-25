@@ -1,6 +1,6 @@
 import {useState, useCallback} from 'react';
 import {PresentationError} from "../interfaces/PresentationError";
-import {transformError} from "./utils/TransformError";
+import {TransformError} from "./utils/TransformError";
 
 /**
  * Custom hook with API for error handling, uses memoization to avoid unnecessary processing between renders
@@ -11,8 +11,7 @@ export function ErrorHandler() {
     const [error, setError] = useState<PresentationError | null>(null);
 
     const handleError = useCallback((error: unknown) => {
-
-        const presentationError = transformError(error);
+        const presentationError = TransformError(error);
         setError(presentationError);
     }, []);
 

@@ -1,8 +1,14 @@
 import {PresentationError} from "../../interfaces/PresentationError";
 import {HttpError} from "../../errors/HttpError";
-import {transformHttpError} from "./ErrorMessageTransformer";
+import {TransformHttpError} from "./ErrorMessageTransformer";
 
-export function transformError(error: unknown): PresentationError {
+/**
+ * TransformError takes care of introducing human-readable error messages to end user.
+ * which includes network connection errors, typical set of http errors and generic errors
+ * @param error
+ * @constructor
+ */
+export function TransformError(error: unknown): PresentationError {
     if (error instanceof TypeError && error.message.includes('fetch')) {
         return {
             message: 'Network connection failed',
@@ -13,7 +19,7 @@ export function transformError(error: unknown): PresentationError {
 
     if (error instanceof HttpError) {
         const status = error.status;
-        return transformHttpError(status, error.message);
+        return TransformHttpError(status, error.message);
     }
 
     if (error instanceof Error) {

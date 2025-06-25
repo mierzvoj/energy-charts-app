@@ -16,7 +16,7 @@ export default function TelemetryProvider({ children }: { children: ReactNode })
     const [datasets, setDatasets] = useState<TelemetryDataset[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const { error, handleError, clearError, hasError } = ErrorHandler();
+    const { error, handleError, clearError } = ErrorHandler();
 
     const fetchTelemetry = useCallback(async () => {
 

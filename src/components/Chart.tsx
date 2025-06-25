@@ -35,64 +35,67 @@ export default function Chart({granularity, chartData}: ChartProps) {
     }, [granularity]);
 
     return (
-        <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-                data-testid="chart-view"
-                data={chartData}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: granularity === 'day' ? 80 : 60,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3"/>
-                <XAxis
-                    dataKey="date"
-                    interval={xAxisInterval}
-                    tick={{fontSize: granularity === 'day' ? 8 : 10}}
-                    angle={granularity === 'day' ? -45 : 0}
-                    textAnchor={granularity === 'day' ? "end" : "middle"}
-                    height={granularity === 'day' ? 80 : 60}
-                />
-                <YAxis/>
-                <Tooltip
-                    formatter={tooltipFormatter}
-                    labelFormatter={(label) => `${label}`}
-                    contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        <>
+            <div data-testid="chart-view"/>
+            <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                    data-testid="chart-view"
+                    data={chartData}
+                    margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: granularity === 'day' ? 80 : 60,
                     }}
-                />
-                <Legend/>
+                >
+                    <CartesianGrid strokeDasharray="3 3"/>
+                    <XAxis
+                        dataKey="date"
+                        interval={xAxisInterval}
+                        tick={{fontSize: granularity === 'day' ? 8 : 10}}
+                        angle={granularity === 'day' ? -45 : 0}
+                        textAnchor={granularity === 'day' ? "end" : "middle"}
+                        height={granularity === 'day' ? 80 : 60}
+                    />
+                    <YAxis/>
+                    <Tooltip
+                        formatter={tooltipFormatter}
+                        labelFormatter={(label) => `${label}`}
+                        contentStyle={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                    />
+                    <Legend/>
 
-                <Line
-                    type="monotone"
-                    dataKey="consumption"
-                    stroke="#2563eb"
-                    dot={granularity !== 'day'}
-                    strokeWidth={granularity === 'day' ? 1.5 : 2.5}
-                    name="Consumption (kWh)"
-                />
-                <Line
-                    type="monotone"
-                    dataKey="price"
-                    stroke="#059669"
-                    dot={granularity !== 'day'}
-                    strokeWidth={granularity === 'day' ? 1.5 : 2.5}
-                    name="Price (PLN/kWh)"
-                />
-                <Line
-                    type="monotone"
-                    dataKey="totalCost"
-                    stroke="#dc2626"
-                    dot={granularity !== 'day'}
-                    strokeWidth={granularity === 'day' ? 1.5 : 2.5}
-                    name="Total Cost (PLN)"
-                />
-            </LineChart>
-        </ResponsiveContainer>
+                    <Line
+                        type="monotone"
+                        dataKey="consumption"
+                        stroke="#2563eb"
+                        dot={granularity !== 'day'}
+                        strokeWidth={granularity === 'day' ? 1.5 : 2.5}
+                        name="Consumption (kWh)"
+                    />
+                    <Line
+                        type="monotone"
+                        dataKey="price"
+                        stroke="#059669"
+                        dot={granularity !== 'day'}
+                        strokeWidth={granularity === 'day' ? 1.5 : 2.5}
+                        name="Price (PLN/kWh)"
+                    />
+                    <Line
+                        type="monotone"
+                        dataKey="totalCost"
+                        stroke="#dc2626"
+                        dot={granularity !== 'day'}
+                        strokeWidth={granularity === 'day' ? 1.5 : 2.5}
+                        name="Total Cost (PLN)"
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </>
     )
 }

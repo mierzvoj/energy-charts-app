@@ -173,7 +173,7 @@ export default function LineTelemetryChart() {
      */
     const chartData = useMemo(() => {
         return aggregateDataByGranularity(datasets);
-    }, [datasets]);
+    }, [datasets, aggregateDataByGranularity]);
 
     /**
      * Data prepared for the statistics view over main chart,

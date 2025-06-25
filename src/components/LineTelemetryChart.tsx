@@ -6,10 +6,14 @@ import {useTelemetryData, useTelemetryErrorHandler} from "../context/TelemetryPr
 import {ErrorView} from "./ErrorView";
 import Chart from "./Chart";
 import ChartSelector from "./ChartSelector";
-import StatisticsDisplay from "./StatisticsDisplay";
+import StatisticsBarView from "./StatisticsBarView";
 import NoDataError from "./NoDataError";
 import ChartInformation from "./ChartInformation";
 
+/**
+ * Component with data logic and processing for chart render
+ * @constructor
+ */
 export default function LineTelemetryChart() {
     const [granularity, setGranularity] = useState<DateGranularity>('day');
     const {datasets, isLoading} = useTelemetryData();
@@ -19,7 +23,7 @@ export default function LineTelemetryChart() {
      * Data aggregation by selected chart granularity logic (day or month), uses callback hook to avoid unnecessary recalculation
      * Recalculates upon granularity dependency change
      * @param {TelemetryDataset[]}  array of data TelemetryDataset
-     * @returns {ChartData[]} array of ChartData type
+     * @return's {ChartData[]} array of ChartData type
      */
     const aggregateDataByGranularity = useCallback((data: TelemetryDataset[]): ChartData[] => {
 
@@ -46,7 +50,11 @@ export default function LineTelemetryChart() {
         if (validData.length === 0) {
             return [];
         }
-
+        /**
+         *Process this if if granularity of final view is to be in days
+         * @return type is of ChartData[] type
+         * null protection, all null items are being filtered out from ChartData[]
+         */
         if (granularity === 'day') {
             return validData.map(item => {
                 try {
@@ -54,7 +62,6 @@ export default function LineTelemetryChart() {
                     if (isNaN(date.getTime())) {
                         return null;
                     }
-
                     return {
                         date: date.toLocaleDateString('en-US', {
                             month: 'short',
@@ -70,7 +77,11 @@ export default function LineTelemetryChart() {
                 }
             }).filter((item): item is ChartData => item !== null);
         }
-
+        /**
+         * Granularity month scenario is being processed by creation of an empty Map with key strings and values of TelemetryDataset[]
+         * Line 89 is unique string key creation by combining year and month ("2024-00", "2024-01", "2024-02"....) it is sortable
+         * Map is being filled with data key, value pairs: key is "2024-00" => [January records], "2024-01" => [Feb records only]...
+         */
         const grouped = new Map<string, TelemetryDataset[]>();
         validData.forEach(item => {
 
@@ -87,7 +98,15 @@ export default function LineTelemetryChart() {
             grouped.get(key)!.push(item);
 
         });
-
+        /**
+         * Map is being transformed into an array by entries(), that returns an iterator from a Map so now our data
+         * @param is grouped Map with entries() applied
+         * @return type ChartData[]
+         * looks ["2024-00" [January data ],... ]
+         * items[] is being processed to calulate aggregates like average, sum, with reduce() function
+         * former map key is being transformed into proper date format "year-month"
+         * sorted by date ChartData[] is being returned
+         */
         return Array.from(grouped.entries())
             .map(([key, items]) => {
                 try {
@@ -149,10 +168,17 @@ export default function LineTelemetryChart() {
             });
     }, [granularity]);
 
+    /**
+    *Memoization protects component from unnecessary data reprocessing, only in case that dataset changes
+     */
     const chartData = useMemo(() => {
         return aggregateDataByGranularity(datasets);
-    }, [datasets, aggregateDataByGranularity]);
+    }, [datasets]);
 
+    /**
+     * Data prepared for the statistics view over main chart,
+     * @return main aggregates like period, total and average price
+     */
     const statistics = useMemo(() => {
         const dataPointsCount = chartData?.length || 0;
         const originalDataCount = datasets?.length || 0;
@@ -201,7 +227,9 @@ export default function LineTelemetryChart() {
             averagePrice: averagePrice || 0
         };
     }, [chartData, datasets]);
-
+    /**
+     * Loading data state "spinner"
+     */
     if (isLoading && (!datasets || datasets.length === 0)) {
         return (
             <div style={{
@@ -213,13 +241,15 @@ export default function LineTelemetryChart() {
                 color: '#6c757d'
             }}>
                 <div style={{textAlign: 'center'}}>
-                    <div style={{fontSize: '24px', marginBottom: '10px'}}>⏳</div>
+                    <div style={{fontSize: '24px', marginBottom: '10px'}}>Wait now...</div>
                     Loading telemetry data...
                 </div>
             </div>
         );
     }
-
+    /**
+     * In case of error, show this error messasge with tehcnical details i.e. http error code, on close clear error from context
+     */
     if (error) {
         return (
             <div style={{padding: '20px'}}>
@@ -231,13 +261,17 @@ export default function LineTelemetryChart() {
             </div>
         );
     }
-
+        /**
+        *Empty dataset error message
+         */
     if ((!chartData || chartData.length === 0) && !isLoading && !error) {
         return (
             <NoDataError/>
         );
     }
-
+    /**
+     * Main chart render code, default styling from re charts
+     */
     return (
         <div style={{width: '100%', height: '600px'}}>
 
@@ -271,7 +305,7 @@ export default function LineTelemetryChart() {
                     && statistics.averagePrice !== undefined
                     && statistics.dateRange.start !== statistics.dateRange.end
                 ) && (
-                    <StatisticsDisplay statistics={statistics}/>
+                    <StatisticsBarView statistics={statistics}/>
                 )}
 
                 {granularity === 'month'

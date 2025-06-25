@@ -11,7 +11,7 @@ export function transformHttpError(status: number, message: string): Presentatio
         case 400:
             return {
                 ...baseError,
-                userMessage: 'Invalid request. Please check your filters and try again.'
+                userMessage: 'Invalid request. Please check your client and try again.'
             };
 
         case 404:

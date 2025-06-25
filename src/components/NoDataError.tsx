@@ -1,3 +1,7 @@
+/**
+ * Simple view when no data is present for the view
+ * @constructor
+ */
 export default function NoDataError() {
     return  (
         <div style={{

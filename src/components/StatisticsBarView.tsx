@@ -1,6 +1,11 @@
 import {StatisticsDisplayProps} from "../types/StatisticsDisplayProps";
 
-export default function StatisticsDisplay({ statistics }: StatisticsDisplayProps) {
+/**
+ * Bar view with statistics like period data start and finish, total energy consumed and average price
+ * @param statistics
+ * @constructor
+ */
+export default function StatisticsBarView({ statistics }: StatisticsDisplayProps) {
     return (
         <div
             data-testid="statistics"
@@ -13,13 +18,13 @@ export default function StatisticsDisplay({ statistics }: StatisticsDisplayProps
             marginBottom: '10px'
         }}>
             {statistics.dateRange && (
-                <div>📅 <strong>Period:</strong> {statistics.dateRange.start} - {statistics.dateRange.end}</div>
+                <div>Calendar data: <strong>Period:</strong> {statistics.dateRange.start} - {statistics.dateRange.end}</div>
             )}
             {statistics.totalConsumption !== undefined && statistics.totalConsumption !== null && (
-                <div>⚡ <strong>Total:</strong> {statistics.totalConsumption.toFixed(2)} kWh</div>
+                <div>Total consumption statistics: <strong>Total:</strong> {statistics.totalConsumption.toFixed(2)} kWh</div>
             )}
             {statistics.averagePrice !== undefined && statistics.averagePrice !== null && (
-                <div>💰 <strong>Avg Price:</strong> {statistics.averagePrice.toFixed(3)} PLN/kWh</div>
+                <div>Average price statistics: <strong>Avg Price:</strong> {statistics.averagePrice.toFixed(3)} PLN/kWh</div>
             )}
         </div>
     )

@@ -22,8 +22,8 @@ energy-charts-app/
 │   │   ├── ❌ ErrorView.tsx                # Error state component
 │   │   ├── 📈 LineTelemetryChart.tsx       # Main line chart (Primary)
 │   │   ├── 🚫 NoDataError.tsx              # No data state
-│   │   ├── 📊 StatisticsDisplay.test.tsx   # Statistics tests
-│   │   └── 📊 StatisticsDisplay.tsx        # Statistics component
+│   │   ├── 📊 StatisticsBarView.test.tsx   # Statistics tests
+│   │   └── 📊 StatisticsBarView.tsx        # Statistics component
 │   │
 │   ├── 📂 context/              # React Context
 │   │   └── 🔗 TelemetryProvider.tsx        # Data provider context

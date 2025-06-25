@@ -1,8 +1,13 @@
 import {DateGranularity} from "../types/DateGranularity";
 import {ChartSelectorProps} from "../types/ChartSelectorProps";
 
-
-
+/**
+ * ChartSelector component, allows to switch views between day and month aggregated data
+ * @param granularity
+ * @param setGranularity
+ * @param isLoading
+ * @constructor
+ */
 export default function ChartSelector({granularity, setGranularity, isLoading}: ChartSelectorProps) {
     return (
         <div>

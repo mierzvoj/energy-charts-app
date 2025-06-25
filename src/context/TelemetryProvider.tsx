@@ -4,6 +4,11 @@ import { telemetryService } from "../services/TelemetryService";
 import {TelemetryContextType} from "../interfaces/TelemetryContextType";
 import {ErrorHandler} from "../hooks/ErrorHandler";
 
+/**
+ * App context implements the React context pattern for sharing telemetry data across components without prop drilling.
+ * Provides context value for child components
+ * Each context re-render calls custom hook ErrorHandler to re-render
+ */
 
 const TelemetryContext = createContext<TelemetryContextType | undefined>(undefined);
 
@@ -56,6 +61,9 @@ export function useTelemetryData(): TelemetryContextType {
     return context;
 }
 
+/**
+ * Error handler to set and clear error state
+ */
 export function useTelemetryErrorHandler() {
     const { error, clearError } = useTelemetryData();
 

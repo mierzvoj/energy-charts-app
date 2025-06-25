@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import {render, screen} from "@testing-library/react";
 import TelemetryProvider from "../context/TelemetryProvider";
-import StatisticsDisplay from "./StatisticsDisplay";
+import StatisticsBarView from "./StatisticsBarView";
 import {Statistics} from "../types/Statistics";
 
 const TestComponent = () => {
@@ -15,12 +15,12 @@ const TestComponent = () => {
     };
     return (
         <TelemetryProvider>
-            <StatisticsDisplay statistics={statisticsTestData} />
+            <StatisticsBarView statistics={statisticsTestData} />
         </TelemetryProvider>
     );
 }
 
-test('StatisticsDisplay', () => {
+test('StatisticsBarView', () => {
     render(<TestComponent />);
 
     expect(screen.getByTestId('statistics')).toBeInTheDocument();

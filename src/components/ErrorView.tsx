@@ -1,6 +1,13 @@
 import React from 'react';
 import {ErrorDisplayProps} from "../interfaces/ErrorDisplayProps";
 
+/**
+ * Technical informative error view with details on error origins like http: 404, 500, 400
+ * @param error
+ * @param onDismiss
+ * @param showTechnicalDetails
+ * @constructor
+ */
 export const ErrorView: React.FC<ErrorDisplayProps> = ({
                                                               error,
                                                               onDismiss,
